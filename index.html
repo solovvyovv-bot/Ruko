@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Переводчик русский ↔ корейский</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef1f6;
+    --card: #ffffff;
+    --ink: #17202e;
+    --muted: #5b6677;
+    --line: #d3d9e3;
+    --accent: #2457d6;
+    --accent-ink: #ffffff;
+    --rec: #c62f3b;
+    --soft: #e4ebfb;
+    --warn: #fff4d6;
+    --warn-ink: #5c4400;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11151c;
+      --card: #1a202b;
+      --ink: #e8edf5;
+      --muted: #9aa5b7;
+      --line: #2c3544;
+      --accent: #7ba2ff;
+      --accent-ink: #0d1626;
+      --rec: #ff6a76;
+      --soft: #22304f;
+      --warn: #3a3015;
+      --warn-ink: #f3dc9a;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 400 17px/1.5 "Noto Sans KR", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  }
+  main { max-width: 640px; margin: 0 auto; display: grid; gap: 14px; }
+  h1 { font-size: 22px; margin: 4px 0 0; font-weight: 700; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .dir { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .lang { font-weight: 700; font-size: 18px; flex: 1; }
+  .lang:last-child { text-align: right; }
+  button { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 8px 14px; min-height: 44px; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  textarea {
+    width: 100%; min-height: 130px; resize: vertical; border: 0; background: transparent; color: inherit;
+    font: inherit; padding: 0; outline-offset: 6px;
+  }
+  .tools { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+  .tools .grow { flex: 1; }
+  #mic { width: 48px; padding: 0; display: grid; place-items: center; }
+  #mic svg { width: 22px; height: 22px; fill: currentColor; }
+  #mic.on { background: var(--rec); border-color: var(--rec); color: #fff; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--rec) 25%, transparent); } }
+  @media (prefers-reduced-motion: reduce) { #mic.on { animation: none; } }
+  .notice { background: var(--warn); color: var(--warn-ink); border-radius: 10px; padding: 10px 12px; font-size: 15px; }
+  .notice[hidden], .block[hidden] { display: none; }
+  .block h2 { font-size: 15px; font-weight: 500; color: var(--muted); margin: 0 0 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .block h2 button { min-height: 36px; padding: 4px 12px; font-size: 14px; }
+  .block p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .main-out p { font-size: 22px; line-height: 1.45; }
+  .main-out { background: var(--soft); border-color: transparent; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 15px; }
+  details input { width: 100%; margin-top: 8px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Переводчик русский ↔ корейский</h1>
+
+  <section class="card">
+    <div class="dir">
+      <span class="lang" id="fromName">Русский</span>
+      <button id="swap" aria-label="Поменять направление перевода">⇄</button>
+      <span class="lang" id="toName">한국어</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <textarea id="input" placeholder="Напишите или надиктуйте текст. Ошибки ИИ исправит сам." aria-label="Исходный текст"></textarea>
+    <div class="tools">
+      <button id="mic" aria-label="Начать диктовку" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z"/></svg>
+      </button>
+      <button id="clear">Очистить</button>
+      <span class="grow"></span>
+      <button id="go" class="primary">Перевести</button>
+    </div>
+  </section>
+
+  <div id="notice" class="notice" role="status" hidden></div>
+
+  <section id="corrected" class="card block" hidden>
+    <h2><span>Исправленный текст</span><button data-copy="correctedText">Копировать</button></h2>
+    <p id="correctedText"></p>
+  </section>
+
+  <section id="result" class="card block main-out" hidden>
+    <h2><span>Перевод</span><button data-copy="translationText">Копировать</button></h2>
+    <p id="translationText"></p>
+  </section>
+
+  <section id="backBlock" class="card block" hidden>
+    <h2><span>Обратный перевод</span><button data-copy="backText">Копировать</button></h2>
+    <p id="backText"></p>
+  </section>
+
+  <details class="card">
+    <summary>Код доступа</summary>
+    <input id="code" type="password" placeholder="Нужен, если вы задали ACCESS_CODE на сервере" autocomplete="off">
+  </details>
+</main>
+
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  const NAMES = { ru: "Русский", ko: "한국어" };
+  const SPEECH = { ru: "ru-RU", ko: "ko-KR" };
+  const state = { from: "ru", to: "ko", listening: false };
+  const input = $("#input"), mic = $("#mic"), go = $("#go"), notice = $("#notice");
+
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+  $("#code").value = store("code") || "";
+  $("#code").addEventListener("input", (e) => store("code", e.target.value));
+
+  function say(msg) { notice.textContent = msg || ""; notice.hidden = !msg; }
+  function hideResults() { ["#corrected", "#result", "#backBlock"].forEach((s) => ($(s).hidden = true)); }
+
+  function renderDir() {
+    $("#fromName").textContent = NAMES[state.from];
+    $("#toName").textContent = NAMES[state.to];
+    input.placeholder = state.from === "ru"
+      ? "Напишите или надиктуйте текст. Ошибки ИИ исправит сам."
+      : "한국어로 쓰거나 말해 보세요. 실수는 AI가 고쳐 줍니다.";
+  }
+  $("#swap").addEventListener("click", () => {
+    stopMic();
+    [state.from, state.to] = [state.to, state.from];
+    const t = $("#translationText").textContent;
+    if (!$("#result").hidden && t) input.value = t;
+    hideResults(); say(""); renderDir();
+  });
+  $("#clear").addEventListener("click", () => { stopMic(); input.value = ""; hideResults(); say(""); input.focus(); });
+
+  // ---- Voice input ----
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null, base = "", wantTranslate = false;
+
+  function micError(code) {
+    const map = {
+      "not-allowed": "Доступ к микрофону запрещён. Разрешите его для этого сайта в настройках браузера и обновите страницу.",
+      "service-not-allowed": "Браузер не разрешает распознавание речи. Попробуйте Chrome или Safari.",
+      "no-speech": "Речь не распознана. Нажмите на микрофон и говорите чётче.",
+      "audio-capture": "Микрофон не найден или занят другим приложением.",
+      "network": "Для распознавания речи нужен интернет."
+    };
+    say(map[code] || "Не удалось включить микрофон (" + code + ").");
+  }
+  function setMic(on) {
+    state.listening = on;
+    mic.classList.toggle("on", on);
+    mic.setAttribute("aria-pressed", String(on));
+    mic.setAttribute("aria-label", on ? "Остановить диктовку" : "Начать диктовку");
+  }
+  function stopMic() { if (rec && state.listening) { wantTranslate = false; rec.stop(); } }
+  function startMic() {
+    if (!SR) return say("Этот браузер не поддерживает голосовой ввод. Откройте сайт в Chrome или Safari, либо используйте диктовку на клавиатуре телефона.");
+    if (!window.isSecureContext) return say("Микрофон работает только на страницах с HTTPS.");
+    say("");
+    base = input.value.trim();
+    rec = new SR();
+    rec.lang = SPEECH[state.from];
+    rec.interimResults = true;
+    rec.continuous = true;
+    rec.onresult = (e) => {
+      let fin = "", interim = "";
+      for (let i = 0; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) fin += t; else interim += t;
+      }
+      input.value = [base, fin + interim].filter(Boolean).join(" ").trim();
+    };
+    rec.onerror = (e) => { wantTranslate = false; micError(e.error); };
+    rec.onend = () => { setMic(false); if (wantTranslate && input.value.trim()) translate(); wantTranslate = false; };
+    try { rec.start(); setMic(true); wantTranslate = true; } catch (err) { micError("start"); }
+  }
+  mic.addEventListener("click", () => {
+    if (state.listening) { wantTranslate = true; rec.stop(); } else startMic();
+  });
+
+  // ---- Translate ----
+  async function translate() {
+    const text = input.value.trim();
+    if (!text) return say("Введите или надиктуйте текст.");
+    say(""); go.disabled = true; go.textContent = "Перевожу…";
+    try {
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-access-code": $("#code").value },
+        body: JSON.stringify({ text, from: state.from, to: state.to })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Ошибка сервера (" + res.status + ").");
+      const changed = data.corrected && data.corrected.trim() !== text;
+      $("#correctedText").textContent = data.corrected;
+      $("#corrected").hidden = !changed;
+      $("#translationText").textContent = data.translation;
+      $("#backText").textContent = data.back;
+      $("#result").hidden = false;
+      $("#backBlock").hidden = false;
+      $("#result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (err) {
+      say(err.message || "Не удалось получить перевод.");
+    } finally {
+      go.disabled = false; go.textContent = "Перевести";
+    }
+  }
+  go.addEventListener("click", () => { stopMic(); translate(); });
+  input.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") translate(); });
+
+  // ---- Copy ----
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-copy]");
+    if (!btn) return;
+    const text = document.getElementById(btn.dataset.copy).textContent;
+    try { await navigator.clipboard.writeText(text); }
+    catch (err) {
+      const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
+      ta.select(); document.execCommand("copy"); ta.remove();
+    }
+    const old = btn.textContent; btn.textContent = "Скопировано";
+    setTimeout(() => (btn.textContent = old), 1500);
+  });
+
+  renderDir();
+})();
+</script>
+</body>
+</html>
